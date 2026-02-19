@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Ingestion + Chat</title>
+  <style>
+    :root {
+      --bg-1: #f6f0e9;
+      --bg-2: #f8fbff;
+      --ink: #10222b;
+      --muted: #577182;
+      --panel: #ffffff;
+      --accent: #0e7490;
+      --accent-2: #0ea5e9;
+      --border: #d8e4ea;
+      --success: #138a36;
+      --warn: #b45f06;
+      --danger: #b42318;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 5% 5%, #ffe6ca 0, transparent 35%),
+        radial-gradient(circle at 100% 90%, #dff1ff 0, transparent 32%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    }
+    .wrap { max-width: 1140px; margin: 28px auto; padding: 16px; display: grid; gap: 16px; }
+    .title { margin: 0; font-size: 1.8rem; letter-spacing: -0.02em; }
+    .subtitle { margin: 4px 0 0; color: var(--muted); }
+    .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1.2fr; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 26px rgba(16, 34, 43, 0.08);
+    }
+    h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input, select, button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font: inherit;
+    }
+    input, select { background: #fff; }
+    button {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.05); }
+    .statusbar { margin-top: 12px; display: grid; gap: 10px; }
+    .statusline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--border);
+      background: #f3f8fb;
+      color: var(--muted);
+    }
+    .pill.ingested { background: #e8f8ec; color: var(--success); border-color: #cbeed5; }
+    .pill.ingesting { background: #eef7ff; color: var(--accent); border-color: #cce7fb; }
+    .pill.failed { background: #fdeeee; color: var(--danger); border-color: #f6cccc; }
+    .pill.uploaded { background: #fff5e8; color: var(--warn); border-color: #f5debb; }
+    progress { width: 100%; height: 14px; }
+    progress::-webkit-progress-bar { background: #ebf1f5; border-radius: 999px; }
+    progress::-webkit-progress-value { background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 999px; }
+    #chat {
+      min-height: 360px;
+      max-height: 420px;
+      overflow: auto;
+      background: #fbfeff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .msg { margin-bottom: 10px; white-space: pre-wrap; line-height: 1.35; }
+    .u { font-weight: 600; color: #0f4c5c; }
+    .a { color: #123b4a; }
+    pre {
+      overflow: auto;
+      background: #f6f9fb;
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 10px;
+      max-height: 210px;
+    }
+    .hidden { display: none; }
+    .hint {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      background: #f8fbfd;
+    }
+    .bubble {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .bubble.user {
+      background: #eff9ff;
+      border-color: #d5ebfb;
+    }
+    .bubble.assistant {
+      background: #ffffff;
+    }
+    .bubble-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .thinking-box {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f8fcff;
+      padding: 6px 8px;
+    }
+    .thinking-box summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #0b6f8b;
+    }
+    .thinking-item {
+      border-left: 2px solid #d3e9f5;
+      padding: 4px 8px;
+      margin: 6px 0;
+      background: #fff;
+      border-radius: 5px;
+      font-size: 0.92rem;
+    }
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <h1 class="title">Sales Data Assistant</h1>
+      <p class="subtitle">Upload -> auto-ingest -> chat over your ingested sales dataset</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Dataset Control</h2>
+        <div class="row">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.json" />
+          <button id="uploadBtn">Upload & Start</button>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <select id="datasetSelect" style="flex:1; min-width:220px;"></select>
+          <button id="refreshBtn">Refresh</button>
+        </div>
+        <div class="statusbar">
+          <div class="statusline">
+            <strong>Ingestion Progress</strong>
+            <span id="statusPill" class="pill">unknown</span>
+          </div>
+          <progress id="ingestProgress" value="0" max="100"></progress>
+          <span id="ingestStage">No active ingestion</span>
+        </div>
+        <pre id="uploadLog"></pre>
+      </div>
+
+      <div class="card">
+        <h2>Chatbot (WebSocket)</h2>
+        <div id="chatLockedHint" class="hint">Chat unlocks after ingestion reaches <strong>ingested</strong>.</div>
+        <div id="chat"></div>
+        <div class="row" style="margin-top:10px;">
+          <input id="message" placeholder="Ask about uploaded sales data..." style="flex:1" />
+          <button id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/main.js"></script>
+</body>
+</html>
