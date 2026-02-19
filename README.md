@@ -22,6 +22,11 @@ FastAPI + DuckDB application for uploading tabular datasets and querying them in
 
 ![Sales Assistant Architecture](sales_assistant_azure_100gb_architecture.png)
 
+## UI Demo
+
+[Recorded UI walkthrough (Google Drive)](https://drive.google.com/file/d/10-G536RHuOFZWuy5kZCdVUIPNe4l5xtX/view?usp=sharing)
+
+
 ## Project Structure
 
 ```text
